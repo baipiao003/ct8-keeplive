@@ -7,7 +7,7 @@ LOGIN_URL="https://panel.ct8.pl/login/"
 USERNAME_FIELD="username"
 # 密码输入框的 name 属性
 PASSWORD_FIELD="password"
-# 登录失败时页面会显示的错误信息 (根据你的截图已更新)
+# 登录失败时页面会显示的错误信息
 FAILURE_KEYWORD="Please enter a correct username and password"
 # ------------------------------------
 
@@ -34,8 +34,6 @@ Base64BUTTON_URL=$(toBase64 $BUTTON_URL)
 export TELEGRAM_TOKEN TELEGRAM_USERID BUTTON_URL
 
 # 使用 jq 解析 JSON 数组
-# 运行前请确保已设置 HOSTS_JSON 环境变量
-# 例如: export HOSTS_JSON='{"info":[{"username":"你的用户名","password":"你的密码"}]}'
 hosts_info=($(echo "${HOSTS_JSON}" | jq -c ".info[]"))
 summary=""
 
@@ -45,9 +43,24 @@ for info in "${hosts_info[@]}"; do
   pass=$(echo $info | jq -r ".password")
   host="panel.ct8.pl"
 
-  echo "--- 正在处理 CT8 账户: $user ---"
+  # --- 新增代码：对用户名进行星号处理 ---
+  user_len=${#user}
+  if [ "$user_len" -gt 2 ]; then
+    # 提取前两位 + 生成对应长度的星号
+    prefix=${user:0:2}
+    suffix_len=$((user_len - 2))
+    asterisks=$(printf "%${suffix_len}s" | tr ' ' '*')
+    masked_user="${prefix}${asterisks}"
+  else
+    # 如果用户名长度不足两位，则直接显示
+    masked_user="$user"
+  fi
+  # --- 结束新增代码 ---
 
-  # 使用 curl 模拟登录 POST 请求
+  # 使用脱敏后的用户名进行输出
+  echo "--- 正在处理 CT8 账户: $masked_user ---"
+
+  # 使用真实的用户名和密码进行登录
   output=$(curl -s -L \
     --cookie-jar /tmp/ct8_cookie.txt \
     -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36" \
@@ -57,10 +70,12 @@ for info in "${hosts_info[@]}"; do
   # 检查返回的 HTML 内容是否包含失败关键字
   if echo "$output" | grep -q "$FAILURE_KEYWORD"; then
     echo "登录失败，用户名或密码错误"
-    msg="🔴CT8 主机 ${host}, 用户 ${user}， 登录失败，请检查用户名或密码!\n"
+    # 在消息中也使用脱敏后的用户名
+    msg="🔴CT8 主机 ${host}, 用户 ${masked_user}， 登录失败，请检查用户名或密码!\n"
   else
     echo "登录成功，账号正常"
-    msg="🟢CT8 主机 ${host}, 用户 ${user}， 登录成功，账号正常!\n"
+    # 在消息中也使用脱敏后的用户名
+    msg="🟢CT8 主机 ${host}, 用户 ${masked_user}， 登录成功，账号正常!\n"
   fi
 
   summary=$summary$(echo -n $msg)
