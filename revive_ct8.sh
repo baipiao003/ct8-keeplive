@@ -1,19 +1,13 @@
 #!/bin/bash
 
 # --- 用户配置区 ---
-# CT8 面板登录页面的 URL
-LOGIN_URL="https://panel.ct8.pl/login/"
-# 用户名输入框的 name 属性
-USERNAME_FIELD="username"
-# 密码输入框的 name 属性
-PASSWORD_FIELD="password"
-
-# 登录失败时页面会显示的错误信息
-FAILURE_KEYWORD="Please enter a correct username and password"
-
-# 登录成功后页面上独有的标志 (根据你的最新截图更新)
-SUCCESS_KEYWORD="Logged in as:"
+# CT8 的 SSH 主机地址
+SSH_HOST="s1.ct8.pl"
+# SSH 连接超时时间 (秒)
+SSH_TIMEOUT=15
 # ---------------------------------------------------------
+
+# ... (辅助函数和变量加载，这部分与之前版本基本一致) ...
 
 # 函数：将字符串转换为 Base64
 toBase64() {
@@ -43,7 +37,6 @@ summary=""
 for info in "${hosts_info[@]}"; do
   user=$(echo $info | jq -r ".username")
   pass=$(echo $info | jq -r ".password")
-  host="panel.ct8.pl"
 
   # 对用户名进行星号处理
   user_len=${#user}
@@ -56,28 +49,25 @@ for info in "${hosts_info[@]}"; do
     masked_user="$user"
   fi
 
-  echo "--- 正在处理 CT8 账户: $masked_user ---"
+  echo "--- 正在处理 SSH 账户: $masked_user ---"
 
-  # 使用真实的用户名和密码进行登录
-  output=$(curl -s -L \
-    --cookie-jar /tmp/ct8_cookie.txt \
-    -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36" \
-    -d "${USERNAME_FIELD}=${user}&${PASSWORD_FIELD}=${pass}" \
-    "${LOGIN_URL}")
-
-  # 核心判断逻辑
-  if echo "$output" | grep -q "$SUCCESS_KEYWORD"; then
-    echo "登录成功，账号正常 (已验证)"
-    msg="✅ 主机 ${host}, 用户 ${masked_user}， 登录成功，账号正常 (已验证)!\n"
-  elif echo "$output" | grep -q "$FAILURE_KEYWORD"; then
-    echo "登录失败，用户名或密码错误"
-    msg="🔴 主机 ${host}, 用户 ${masked_user}， 登录失败，请检查用户名或密码!\n"
+  # --- 核心保活逻辑更新为 SSH 登录 ---
+  # 使用 sshpass 进行非交互式 SSH 登录。
+  # -o StrictHostKeyChecking=no: 首次登录时自动接受主机密钥，避免脚本中断。
+  # -o ConnectTimeout=${SSH_TIMEOUT}: 设置连接超时，防止因网络问题卡死。
+  # 'exit': 登录成功后立即执行 exit 命令退出，完成保活操作。
+  sshpass -p "$pass" ssh -o StrictHostKeyChecking=no -o ConnectTimeout=${SSH_TIMEOUT} ${user}@${SSH_HOST} 'exit'
+  
+  # 检查上一条命令（SSH登录）的退出状态码
+  # 状态码为 0 代表成功
+  if [ $? -eq 0 ]; then
+    echo "SSH 登录成功，账号正常"
+    msg="✅ 主机 ${SSH_HOST}, 用户 ${masked_user}， SSH 登录成功，账号正常!\n"
   else
-    echo "状态未知，未找到成功或失败标志。请检查 ct8_debug_output.html 文件。"
-    msg="⚠️ 主机 ${host}, 用户 ${masked_user}， 状态未知，请检查脚本日志!\n"
-    # 将 curl 的输出保存到文件，方便调试
-    echo "$output" > "ct8_debug_output_${user}.html"
+    echo "SSH 登录失败，请检查密码或网络"
+    msg="🔴 主机 ${SSH_HOST}, 用户 ${masked_user}， SSH 登录失败，请检查密码或网络!\n"
   fi
+  # --- 核心逻辑更新结束 ---
 
   summary=$summary$(echo -n $msg)
 done
@@ -92,8 +82,5 @@ if [[ "$LOGININFO" == "Y" ]]; then
     echo "未找到 tgsend.sh，无法发送通知。"
   fi
 fi
-
-# 清理 cookie 文件
-rm -f /tmp/ct8_cookie.txt
 
 echo "--- 所有任务完成 ---"
