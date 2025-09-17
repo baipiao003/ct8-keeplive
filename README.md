@@ -1,4 +1,4 @@
-# ct8批量保号、消息推送
+# serv00 / ct8批量保号、消息推送
 
 ## 变量说明
 
@@ -12,7 +12,6 @@
 | BUTTON_URL      | 略     | 设置 TG 推送消息中的按钮链接 (发送 TG 消息可选),支持#HOST，#USER，#PASS 等变量。 |
 | AUTOUPDATE      | Y/N    | 设置是否自动更新服务器上的代码,设置在 variable 变量中，值为 Y/N(默认: Y)         |
 | LOGININFO       | Y/N    | 在 variable 变量中设置(默认为 N)，Y:发送登录汇总消息 N:只在登录失败时发送        |
-| TOKEN           | 123456 | 网页保活(keepalive)的密钥(必选)                                                  |
 
 各主机保活时可不必输入消息通知参数，由 github 同一配置参数。
 
@@ -39,6 +38,21 @@
 
 ## HOSTS_JSON 的配置实例
 
+单个账户
+```js
+{
+  "info": [
+  {
+    "host": "s2.serv00.com",
+    "username": "kkk",
+    "port": 22,
+    "password": "fdsafjijgn"
+  }    
+ ]
+}
+```
+
+多个账户
 ```js
  {
    "info": [
