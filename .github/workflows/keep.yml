@@ -1,4 +1,4 @@
-name: 批量访问保活进程
+name: 批量访问保活进程-serv00
 
 on:
   schedule:
