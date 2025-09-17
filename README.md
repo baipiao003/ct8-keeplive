@@ -1,17 +1,4 @@
-# serv00/hostuno 上的一些应用，包括 argo+vmess/vmess+ws/hy2/socks5/mtproto/alist/哪吒探针|面板/sun-panel/webssh 等, 自动化部署、批量保号、进程防杀、消息推送
-
-💖 如果你在用这个项目，请给我打个 star，好让我知道有多少人从这个项目中受益。
-
-## 前置工作
-
-1. 你需要有一个 serv00/hostuno 帐号
-2. 运行安装命令后重新登录，输入 ss 回车进入界面。(以后都是输入 ss 回车进入界面)
-
-## 安装说明
-
-```s
-bash <(curl -Ls https://raw.githubusercontent.com/frankiejun/serv00-play/main/start.sh) --install
-```
+# ct8批量保号、消息推送
 
 ## 变量说明
 
@@ -70,35 +57,6 @@ bash <(curl -Ls https://raw.githubusercontent.com/frankiejun/serv00-play/main/st
   ]
 }
 ```
-
-## 安装说明视频
-
-安装使用说明可以看[这里](https://youtu.be/ZCr7YiQX8Qs)  
-临时隧道已失效，请使用固定隧道名，[如何申请固定隧道名](https://youtu.be/KyMvtWknu-k)  
-argo+vmess 的搭建教学看[这里](https://youtu.be/nmb2F6uBKsg?si=v8twWIkIjsN8UYb-)
-
-由于本项目一直在迭代开发，界面会有些变化，想详细了解，可以看这一系列视频[serv00-play 系列](https://www.youtube.com/playlist?list=PLaMnUIjE3d5zArqlLzTU2oMZ0h-5VP6C0)
-
-## 赞助
-
-<left><details><summary><strong> [点击展开] 请作者喝杯咖啡 ~🧧</strong></summary>
-_捐赠将是对我最大的支持，它将激励我持续的创新和创作。捐赠>=5u, 可联系我加入饭友会会员群, 捐赠>=10u, 加入赞助人感谢名单_
-
-![](https://look.pics.cloudns.ch/img/%E6%AC%A7%E6%98%93%E8%B5%9E%E5%8A%A9%E7%A0%81.png)
-
-- **USDT-TRC20:** `TUa2hLirmyq6tUPpfxHuMmWJExR91vHo5t`
-
-</details></left>
-
-| 赞助人                                                                                                                 | 赞助方式                 | 备注 |
-| ---------------------------------------------------------------------------------------------------------------------- | ------------------------ | ---- |
-| [YXVM](https://support.nodeget.com/page/promotion?id=105) 和 [NodeSupport](https://github.com/NodeSeekDev/NodeSupport) | 赞助本项目提供永久服务器 | --   |
-
-## 项目鸣谢
-
-[nekohasekai](https://github.com/SagerNet/sing-box)、[AlistGo](https://github.com/AlistGo/alist)、[9seconds](https://github.com/9seconds/mtg)、[eooce](https://github.com/eooce)、[nrootconauto](https://github.com/nrootconauto/MrChrootBSD)、[nezhahq](https://github.com/nezhahq/agent)、[huashengdun](https://github.com/huashengdun/webssh)、[hslr-s](https://github.com/hslr-s/sun-panel)、[yangtb2024](https://github.com/yangtb2024/OneTimeMessagePHP)
-
-测试人员: [ryty1](https://github.com/ryty1), [fgr178707](https://github.com/fgr178707)
 
 ## 免责声明
 
