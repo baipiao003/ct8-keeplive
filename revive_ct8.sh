@@ -7,16 +7,20 @@ LOGIN_URL="https://panel.ct8.pl/login/"
 USERNAME_FIELD="username"
 # 密码输入框的 name 属性
 PASSWORD_FIELD="password"
+
 # 登录失败时页面会显示的错误信息
 FAILURE_KEYWORD="Please enter a correct username and password"
-# ------------------------------------
+
+# 登录成功后页面上独有的标志 (根据你的最新截图更新)
+SUCCESS_KEYWORD="Logged in as:"
+# ---------------------------------------------------------
 
 # 函数：将字符串转换为 Base64
 toBase64() {
   echo -n "$1" | base64
 }
 
-# 从环境变量加载配置，提供默认值
+# 从环境变量加载配置
 AUTOUPDATE=${AUTOUPDATE:-Y}
 SENDTYPE=${SENDTYPE:-null}
 TELEGRAM_TOKEN=${TELEGRAM_TOKEN:-null}
@@ -26,11 +30,9 @@ BUTTON_URL=${BUTTON_URL:-null}
 LOGININFO=${LOGININFO:-N}
 TOKEN=${TOKEN:-""} 
 
-# Base64 编码一些通知服务需要的变量
 TOKEN=$(toBase64 $TOKEN)
 base64_TELEGRAM_TOKEN=$(toBase64 $TELEGRAM_TOKEN)
 Base64BUTTON_URL=$(toBase64 $BUTTON_URL)
-
 export TELEGRAM_TOKEN TELEGRAM_USERID BUTTON_URL
 
 # 使用 jq 解析 JSON 数组
@@ -43,21 +45,17 @@ for info in "${hosts_info[@]}"; do
   pass=$(echo $info | jq -r ".password")
   host="panel.ct8.pl"
 
-  # --- 新增代码：对用户名进行星号处理 ---
+  # 对用户名进行星号处理
   user_len=${#user}
   if [ "$user_len" -gt 2 ]; then
-    # 提取前两位 + 生成对应长度的星号
     prefix=${user:0:2}
     suffix_len=$((user_len - 2))
     asterisks=$(printf "%${suffix_len}s" | tr ' ' '*')
     masked_user="${prefix}${asterisks}"
   else
-    # 如果用户名长度不足两位，则直接显示
     masked_user="$user"
   fi
-  # --- 结束新增代码 ---
 
-  # 使用脱敏后的用户名进行输出
   echo "--- 正在处理 CT8 账户: $masked_user ---"
 
   # 使用真实的用户名和密码进行登录
@@ -67,21 +65,24 @@ for info in "${hosts_info[@]}"; do
     -d "${USERNAME_FIELD}=${user}&${PASSWORD_FIELD}=${pass}" \
     "${LOGIN_URL}")
 
-  # 检查返回的 HTML 内容是否包含失败关键字
-  if echo "$output" | grep -q "$FAILURE_KEYWORD"; then
+  # 核心判断逻辑
+  if echo "$output" | grep -q "$SUCCESS_KEYWORD"; then
+    echo "登录成功，账号正常 (已验证)"
+    msg="✅ 主机 ${host}, 用户 ${masked_user}， 登录成功，账号正常 (已验证)!\n"
+  elif echo "$output" | grep -q "$FAILURE_KEYWORD"; then
     echo "登录失败，用户名或密码错误"
-    # 在消息中也使用脱敏后的用户名
-    msg="🔴CT8 主机 ${host}, 用户 ${masked_user}， 登录失败，请检查用户名或密码!\n"
+    msg="🔴 主机 ${host}, 用户 ${masked_user}， 登录失败，请检查用户名或密码!\n"
   else
-    echo "登录成功，账号正常"
-    # 在消息中也使用脱敏后的用户名
-    msg="🟢CT8 主机 ${host}, 用户 ${masked_user}， 登录成功，账号正常!\n"
+    echo "状态未知，未找到成功或失败标志。请检查 ct8_debug_output.html 文件。"
+    msg="⚠️ 主机 ${host}, 用户 ${masked_user}， 状态未知，请检查脚本日志!\n"
+    # 将 curl 的输出保存到文件，方便调试
+    echo "$output" > "ct8_debug_output_${user}.html"
   fi
 
   summary=$summary$(echo -n $msg)
 done
 
-# 如果 LOGININFO 设置为 Y，则发送汇总通知
+# 发送汇总通知
 if [[ "$LOGININFO" == "Y" ]]; then
   if [ -f "./tgsend.sh" ]; then
     chmod +x ./tgsend.sh
