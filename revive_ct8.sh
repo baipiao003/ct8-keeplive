@@ -52,16 +52,20 @@ for info in "${hosts_info[@]}"; do
 
   echo "--- 正在处理 SSH 账户: $masked_user ---"
 
-  # --- 核心保活逻辑：SSH 登录 (已加入 -p 端口选项) ---
-  sshpass -p "$pass" ssh -p ${SSH_PORT} -o StrictHostKeyChecking=no -o ConnectTimeout=${SSH_TIMEOUT} ${user}@${SSH_HOST} 'exit'
+  # --- 核心保活逻辑：执行 'date' 命令并验证输出 ---
+  # 尝试执行 'date' 命令并捕获其输出。
+  # 2>/dev/null 会将SSH连接过程中的错误信息（如密码错误）丢弃，确保我们只捕获 date 命令本身的输出。
+  date_output=$(sshpass -p "$pass" ssh -p ${SSH_PORT} -o StrictHostKeyChecking=no -o ConnectTimeout=${SSH_TIMEOUT} ${user}@${SSH_HOST} 'date' 2>/dev/null)
 
-  # 检查上一条命令（SSH登录）的退出状态码
-  if [ $? -eq 0 ]; then
-    echo "SSH 登录成功，账号正常"
-    msg="✅ 主机 ${SSH_HOST}, 用户 ${masked_user}， SSH 登录成功，账号正常!\n"
+  # 检查 'date_output' 变量是否非空。如果非空，说明命令成功执行。
+  if [ -n "$date_output" ]; then
+    echo "SSH 验证成功"
+    # 打印从服务器获取的日期结果
+    echo "服务器时间: $date_output"
+    msg="✅ 主机 ${SSH_HOST}, 用户 ${masked_user}， 验证成功 (服务器时间: ${date_output})!\n"
   else
-    echo "SSH 登录失败，请检查密码、端口或网络"
-    msg="🔴 主机 ${SSH_HOST}, 用户 ${masked_user}， SSH 登录失败，请检查密码、端口或网络!\n"
+    echo "SSH 验证失败，无法执行远程命令"
+    msg="🔴 主机 ${SSH_HOST}, 用户 ${masked_user}， 验证失败，无法执行远程命令!\n"
   fi
   # --- 核心逻辑结束 ---
 
