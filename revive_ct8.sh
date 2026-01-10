@@ -63,7 +63,7 @@ for info in "${hosts_info[@]}"; do
                          -o ConnectTimeout=$SSH_TIMEOUT \
                          -o BatchMode=no \
                          -p $port \
-                         $user@$host "$KEEPALIVE_CMD" 2>&1)
+                         $user@$host "$KEEPALIVE_CMD" 2>/dev/null)
   
   ssh_result=$?
   
