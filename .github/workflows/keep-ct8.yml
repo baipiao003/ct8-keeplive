@@ -33,8 +33,8 @@ jobs:
           LOGININFO: ${{vars.LOGININFO}}
           TOKEN: ${{secrets.TOKEN}}
         run: |
-          chmod +x ./revive_node.sh
-          ./revive_node.sh
+          chmod +x ./revive_ct8.sh
+          ./revive_ct8.sh
 
       - name: Keep Running
         if: github.event_name == 'schedule'
