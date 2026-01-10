@@ -4,7 +4,7 @@
 SSH_TIMEOUT=15
 
 # 保活命令（根据实际需求调整）
-KEEPALIVE_CMD="date && whoami"
+KEEPALIVE_CMD="date"
 
 AUTOUPDATE=${AUTOUPDATE:-Y}
 SENDTYPE=${SENDTYPE:-null}
@@ -18,6 +18,25 @@ LOGININFO=${LOGININFO:-N}
 
 export TELEGRAM_TOKEN TELEGRAM_USERID BUTTON_URL
 
+# 加密用户名的函数，保留前两位，其余用星号替换
+encrypt_username() {
+    local username="$1"
+    local length=${#username}
+    
+    if [ $length -le 2 ]; then
+        # 如果用户名长度小于等于2，全部显示
+        echo "$username"
+    else
+        # 保留前两位，后面用星号填充
+        local prefix="${username:0:2}"
+        local stars=""
+        for ((i=2; i<length; i++)); do
+            stars="${stars}*"
+        done
+        echo "${prefix}${stars}"
+    fi
+}
+
 # 使用 jq 提取 JSON 数组，并将其加载为 Bash 数组
 hosts_info=($(echo "${HOSTS_JSON}" | jq -c ".info[]"))
 summary=""
@@ -30,8 +49,11 @@ for info in "${hosts_info[@]}"; do
   host=$(echo $info | jq -r ".host")
   port=$(echo $info | jq -r ".port")
   pass=$(echo $info | jq -r ".password")
+  
+  # 加密用户名
+  encrypted_user=$(encrypt_username "$user")
 
-  echo "检查主机: $host, 用户: $user, 端口: $port"
+  echo "检查主机: $host, 用户: $encrypted_user, 端口: $port"
   
   # 创建临时密钥文件（用于密码认证）
   TEMP_KEY_FILE="${TEMP_KEY_PREFIX}_${host}_${port}"
@@ -48,28 +70,28 @@ for info in "${hosts_info[@]}"; do
   # 根据SSH返回状态判断连接结果
   if [ $ssh_result -eq 0 ]; then
     echo "SSH连接成功，账号正常"
-    msg="🟢主机 ${host}:${port}, 用户 ${user}，SSH连接成功，账号正常！\n"
+    msg="🟢主机 ${host}:${port}, 用户 ${encrypted_user}，SSH连接成功，账号正常！\n"
   elif [ $ssh_result -eq 5 ]; then
     echo "SSH连接被拒绝（可能是账户被封）"
-    msg="🔴主机 ${host}:${port}, 用户 ${user}，SSH连接被拒绝，账号可能被封！\n"
+    msg="🔴主机 ${host}:${port}, 用户 ${encrypted_user}，SSH连接被拒绝，账号可能被封！\n"
     chmod +x ./tgsend.sh
     export PASS=$pass
     ./tgsend.sh "CT8告警 - Host:${host}:${port}, user:${user}, SSH连接被拒绝，账号可能被封！"
   elif [ $ssh_result -eq 255 ]; then
     echo "SSH连接失败（网络或服务问题）"
-    msg="🔴主机 ${host}:${port}, 用户 ${user}，SSH连接失败，网络或服务问题！\n"
+    msg="🔴主机 ${host}:${port}, 用户 ${encrypted_user}，SSH连接失败，网络或服务问题！\n"
     chmod +x ./tgsend.sh
     export PASS=$pass
     ./tgsend.sh "CT8告警 - Host:${host}:${port}, user:${user}, SSH连接失败，请检查网络或服务状态"
   elif [ $ssh_result -eq 6 ]; then
     echo "用户名或密码错误"
-    msg="🔴主机 ${host}:${port}, 用户 ${user}，用户名或密码错误！\n"
+    msg="🔴主机 ${host}:${port}, 用户 ${encrypted_user}，用户名或密码错误！\n"
     chmod +x ./tgsend.sh
     export PASS=$pass
     ./tgsend.sh "CT8告警 - Host:${host}:${port}, user:${user}, 用户名或密码错误！"
   else
     echo "SSH连接异常，返回码: $ssh_result"
-    msg="🔴主机 ${host}:${port}, 用户 ${user}，SSH连接异常，返回码: ${ssh_result}！\n"
+    msg="🔴主机 ${host}:${port}, 用户 ${encrypted_user}，SSH连接异常，返回码: ${ssh_result}！\n"
     chmod +x ./tgsend.sh
     export PASS=$pass
     ./tgsend.sh "CT8告警 - Host:${host}:${port}, user:${user}, SSH连接异常，返回码: ${ssh_result}"
