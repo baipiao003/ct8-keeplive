@@ -59,12 +59,11 @@ for info in "${hosts_info[@]}"; do
   TEMP_KEY_FILE="${TEMP_KEY_PREFIX}_${host}_${port}"
   
   # 方法1：尝试使用密码通过SSH连接
-  echo "尝试SSH连接..."
-  ssh_output=$(sshpass -p "$pass" ssh -o StrictHostKeyChecking=no \
+  sshpass -p "$pass" ssh -o StrictHostKeyChecking=no \
                          -o ConnectTimeout=$SSH_TIMEOUT \
                          -o BatchMode=no \
                          -p $port \
-                         $user@$host "$KEEPALIVE_CMD" 2>&1)
+                         $user@$host "$KEEPALIVE_CMD" 2>&1
   
   ssh_result=$?
   
