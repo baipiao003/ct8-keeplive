@@ -59,11 +59,12 @@ for info in "${hosts_info[@]}"; do
   TEMP_KEY_FILE="${TEMP_KEY_PREFIX}_${host}_${port}"
   
   # 方法1：尝试使用密码通过SSH连接
-  sshpass -p "$pass" ssh -o StrictHostKeyChecking=no \
+  echo "尝试SSH连接..."
+  ssh_output=$(sshpass -p "$pass" ssh -o StrictHostKeyChecking=no \
                          -o ConnectTimeout=$SSH_TIMEOUT \
                          -o BatchMode=no \
                          -p $port \
-                         $user@$host "$KEEPALIVE_CMD" 2>&1
+                         $user@$host "$KEEPALIVE_CMD" 2>&1)
   
   ssh_result=$?
   
@@ -71,6 +72,11 @@ for info in "${hosts_info[@]}"; do
   if [ $ssh_result -eq 0 ]; then
     echo "SSH连接成功，账号正常"
     msg="🟢主机 ${host}:${port}, 用户 ${encrypted_user}，SSH连接成功，账号正常！\n"
+    # 提取日期信息并记录
+    date_info=$(echo "$ssh_output" | grep -E "(Mon|Tue|Wed|Thu|Fri|Sat|Sun) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) [0-9]{1,2} [0-9]{2}:[0-9]{2}:[0-9]{2} [A-Z]{3} 20[0-9]{2}")
+    if [ -n "$date_info" ]; then
+      echo "服务器时间: $date_info"
+    fi
   elif [ $ssh_result -eq 5 ]; then
     echo "SSH连接被拒绝（可能是账户被封）"
     msg="🔴主机 ${host}:${port}, 用户 ${encrypted_user}，SSH连接被拒绝，账号可能被封！\n"
