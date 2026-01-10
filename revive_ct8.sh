@@ -4,7 +4,7 @@
 SSH_TIMEOUT=15
 
 # 保活命令（根据实际需求调整）
-KEEPALIVE_CMD="date"
+KEEPALIVE_CMD="date '+%Y-%m-%d %H:%M:%S'"
 
 AUTOUPDATE=${AUTOUPDATE:-Y}
 SENDTYPE=${SENDTYPE:-null}
