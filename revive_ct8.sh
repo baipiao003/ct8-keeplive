@@ -71,7 +71,8 @@ for info in "${hosts_info[@]}"; do
   if [ $ssh_result -eq 0 ]; then
     echo "SSH连接成功，账号正常"
     echo "服务器时间: $ssh_output"
-    msg="🟢主机 ${host}:${port}, 用户 ${encrypted_user}，SSH连接成功，账号正常！\n"
+    # 修改这里：将服务器时间明文显示在消息中
+    msg="🟢主机 ${host}:${port}, 用户 ${encrypted_user}，SSH连接成功，账号正常！\n服务器时间: ${ssh_output}\n"
   elif [ $ssh_result -eq 5 ]; then
     echo "SSH连接被拒绝（可能是账户被封）"
     msg="🔴主机 ${host}:${port}, 用户 ${encrypted_user}，SSH连接被拒绝，账号可能被封！\n"
